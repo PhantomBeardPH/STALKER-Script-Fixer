@@ -1,6 +1,8 @@
 # STALKER-Scripts-Fixer
  Auto-fixer for S.T.A.L.K.E.R. mods (Anomaly,GAMMA, EFP, Radiophobia series and Stalker  Anthalogy OBT) to prevent script crashes. Lua/LTX auto-fixer with drag-and-drop GUI and log error scan.
+ 
 ///////////////////////////////////
+
 # STALKER Auto Fixer 🛠️
 
 An automatic script error patcher for major **S.T.A.L.K.E.R.** modpacks like **GAMMA**, **EFP**, and **Anthalogy 2.0 OBT**.
@@ -99,6 +101,7 @@ contact me at mangganern2023@gmail.com
 if you want your project to be supported by my work.
 
 :) Happy Hunting Stalker!
+
 /////////////////////////////////// 
 
 Example auto-patch:
