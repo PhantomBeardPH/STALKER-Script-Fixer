@@ -96,7 +96,13 @@ The tool:
 - Skips huge files (>5MB)  
 - Threaded scanning keeps GUI responsive  
 - Can run during modding sessions without game restart
+- 
+---
+## 💖 Support This Project
 
+If you find this tool helpful, consider supporting it:
+
+[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/mesharie)
 ---
 
 ## 🛠️ Manual CLI Usage (Advanced)
