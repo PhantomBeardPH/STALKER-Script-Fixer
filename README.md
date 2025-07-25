@@ -62,24 +62,12 @@ Uses generator-style iteration
 Ideal for low-spec machines and older PCs used for modding
 
 📁 Where are backups saved?
-NOTE: Backups are saved in the same folder as the original file, with a .bak extension added to the filename.
+NOTE: Backups are saved in 'backups' folder inside base directory (not gamedata) to prevent conflicts.
 
 ✅ Example:
 If the original script is:
 
-Copy
-Edit
-gamedata\scripts\some_script.script
-Then the backup file will be:
-
-Copy
-Edit
-gamedata\scripts\some_script.script.bak
-This ensures:
-
-The backup stays next to the file it protects.
-
-You can manually compare, restore, or delete the .bak file anytime.
+You can manually compare, restore, or delete the files anytime.
 
 👥 Contributing
 Pull requests welcome!
