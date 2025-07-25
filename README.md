@@ -72,6 +72,25 @@ GUI frontend (optional future goal)
 
 Error logging and UI feedback
 
+NOTE: Backups are saved in the same folder as the original file, with a .bak extension added to the filename.
+
+✅ Example:
+If the original script is:
+
+Copy
+Edit
+gamedata\scripts\some_script.script
+Then the backup file will be:
+
+Copy
+Edit
+gamedata\scripts\some_script.script.bak
+This ensures:
+
+The backup stays next to the file it protects.
+
+You can manually compare, restore, or delete the .bak file anytime.
+
 🛡️ License
 MIT License — free to use, share, and improve.
 
@@ -81,6 +100,7 @@ if you want your project to be supported by my work.
 
 :) Happy Hunting Stalker!
 /////////////////////////////////// 
+
 Example auto-patch:
 ```lua
 -- Before
