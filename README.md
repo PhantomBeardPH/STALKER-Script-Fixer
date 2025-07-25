@@ -59,21 +59,9 @@ Skips files over 5MB
 
 Uses generator-style iteration
 
-Ideal for low-spec machines and older PCs used for modding.
+Ideal for low-spec machines and older PCs used for modding
 
-👥 Contributing
-Pull requests welcome!
-
-If you’re a STALKER modder or Lua nerd, help improve:
-
-Detection logic
-
-Wrap patterns
-
-GUI frontend (optional future goal)
-
-Error logging and UI feedback
-
+📁 Where are backups saved?
 NOTE: Backups are saved in the same folder as the original file, with a .bak extension added to the filename.
 
 ✅ Example:
@@ -92,6 +80,19 @@ This ensures:
 The backup stays next to the file it protects.
 
 You can manually compare, restore, or delete the .bak file anytime.
+
+👥 Contributing
+Pull requests welcome!
+
+If you’re a STALKER modder or Lua nerd, help improve:
+
+Detection logic
+
+Wrap patterns
+
+GUI frontend (optional future goal)
+
+Error logging and UI feedback
 
 🛡️ License
 MIT License — free to use, share, and improve.
