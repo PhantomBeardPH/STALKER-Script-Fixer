@@ -1,5 +1,5 @@
 # STALKER-Scripts-Fixer
- Auto-fixer for S.T.A.L.K.E.R. mods (Anomaly,GAMMA, EFP, Radiophobia series and Stalker  Anthalogy OBT) to prevent script crashes. 
+ Auto-fixer for S.T.A.L.K.E.R. mods (Anomaly,GAMMA, EFP, Radiophobia series and Stalker  Anthalogy OBT) to prevent script crashes. Lua/LTX auto-fixer with drag-and-drop GUI and log error scan.
 ///////////////////////////////////
 # STALKER Auto Fixer 🛠️
 
@@ -28,6 +28,59 @@ This script automatically:
 3. Wraps them in safe `if type(...) == "function"` checks to prevent nil crashes.
 4. Backs up any changed file before fixing.
 
+🚀 Usage
+python stalker_fixer.py /path/to/gamedata
+--This will recursively scan and fix script/config files in the target folder.
+
+📦 Supported Mods (and growing):
+-GAMMA (Anomaly-based)
+-EFP (Expanded Factions Project)
+-STALKER Anthalogy 2.0+ OBT
+
+ Others (open a GitHub Issue or PR for requests!)
+
+ 🧠 Modder Tips:
+Place this tool in your root STALKER mod directory
+
+Run it after every mod install or script change
+
+Use version control (like Git) to track changes
+
+Do not run it blindly if you manually wrote complex Lua logic — always review changes
+
+💾 Low RAM Usage
+This script:
+
+Avoids loading massive files in memory
+
+Skips files over 5MB
+
+Uses generator-style iteration
+
+Ideal for low-spec machines and older PCs used for modding.
+
+👥 Contributing
+Pull requests welcome!
+
+If you’re a STALKER modder or Lua nerd, help improve:
+
+Detection logic
+
+Wrap patterns
+
+GUI frontend (optional future goal)
+
+Error logging and UI feedback
+
+🛡️ License
+MIT License — free to use, share, and improve.
+
+FURTHERMORE:
+contact me at mangganern2023@gmail.com
+if you want your project to be supported by my work.
+
+:) Happy Hunting Stalker!
+/////////////////////////////////// 
 Example auto-patch:
 ```lua
 -- Before
@@ -37,3 +90,5 @@ r_nvg.toggle_nightvision()
 if type(r_nvg) == "table" and type(r_nvg.toggle_nightvision) == "function" then
     r_nvg.toggle_nightvision()
 end
+///////////////////////////////////
+
