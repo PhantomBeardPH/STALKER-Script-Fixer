@@ -98,11 +98,7 @@ The tool:
 - Can run during modding sessions without game restart
 - 
 ---
-## 💖 Support This Project
-
-If you find this tool helpful, consider supporting it:
-
-[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/mesharie)
+REMOVED SECTION
 ---
 
 ## 🛠️ Manual CLI Usage (Advanced)
