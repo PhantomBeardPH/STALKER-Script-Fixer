@@ -1,0 +1,2 @@
+# Format: Language=Key=Translation
+# Example: Spanish=Fix Script=Arreglar Script
