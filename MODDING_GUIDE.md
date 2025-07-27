@@ -1,5 +1,7 @@
-# 🛠 Modding Guide for STALKER Scripts Fixer v1.0
-
+# 🛠 Modding Guide Plan for STALKER Scripts Fixer v1.0
+///////////
+--Example
+//////////
 This guide helps modders and contributors extend the features of STALKER Scripts Fixer, especially by adding new auto-fix patterns or improving localization.
 
 ---
@@ -40,3 +42,4 @@ If contributing auto-fixes:
 For suggestions or bug reports:
 📧 mangganern2023@gmail.com
 🔖 Maintainer: PhantomBeardPH
+//////////
