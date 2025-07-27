@@ -1,157 +1,138 @@
-# STALKER Auto Fixer 🛠️
+Project Title: STALKER Auto Fixer 🛠️
+Objective: To build an automatic Lua/LTX error patching tool for major S.T.A.L.K.E.R. modpacks like GAMMA, EFP, Radiophobia 3, and Anomaly Anthalogy 2.0 OBT.
 
-An automatic Lua/LTX error patcher for major **S.T.A.L.K.E.R.** modpacks like **GAMMA**, **EFP**, **Radiophobia 3**, and **Anomaly Anthalogy 2.0 OBT**.
+🧠 Project Goal
+To scan and automatically fix risky scripting patterns across gamedata or mod folders by:
 
-This tool scans your `gamedata` folder (or full mod directory), detects risky script patterns, and applies safe auto-fixes to help prevent crashes. It comes with a drag-and-drop GUI, live scan status, and full logging/backup support.
+Detecting problematic Lua/LTX logic
 
----
+Wrapping them with safe guards
 
-## 🔧 Features
+Maintaining backups and logs
 
-✅ Drag-and-drop GUI for folders or files  
-✅ Checkbox to scan **entire gamedata** or just recently modified files  
-✅ Supports `.script`, `.ltx`, `.ini`, `.xml`, and `.txt` files  
-✅ Live list of scanned files shown during scan  
-✅ Safe auto-wraps for Lua functions like `r_nvg.toggle_nightvision`, `actor:give_info_portion()`  
-✅ **Auto backup** with versioned timestamps (before any changes)  
-✅ **SHA-256 log and patch integrity check**  
-✅ Threaded scanning (no freezing)  
-✅ Revert all changes with cancel button  
-✅ Auto-saves logs to `stalkerscriptsfixer logs/`  
-✅ Option to open logs in Notepad or Notepad++  
-✅ Open-source, community-rule friendly (`fix_rules.json`)  
+Reducing mod crashes for both developers and players
 
----
+✅ Planned Features
+Core Functionality
+🔍 Scans .script, .ltx, .ini, .xml, .txt files
 
-## ⚙️ How It Works
+📂 Drag-and-drop GUI for folders or files
 
-The tool:
+📌 Option to scan entire gamedata or only recently modified files
 
-1. Scans `.script`, `.ltx`, `.ini`, `.xml`, and `.txt` files in `gamedata` or entire mod directory  
-2. Looks for known **risky Lua or LTX functions** (customizable via `fix_rules.json`)  
-3. Auto-wraps with safe `if type(...) == "function"` guards  
-4. Creates timestamped `.bak` versions of every edited file  
-5. Displays live progress in GUI  
-6. Saves logs with scan results, file paths, and backups  
+⚙️ Fixes risky Lua patterns like:
 
----
-
-## 🚀 How to Use
-
-### Drag-and-Drop Mode (Recommended)
-
-1. Run `StalkerScriptFixer.exe`  
-2. Drag your **`gamedata` folder** or **entire mod directory** onto the window  
-3. Check `Scan Entire Gamedata` if needed  
-4. Click `Start Scan`  
-5. Monitor live progress, or click `Cancel & Revert` at any time
-
----
-
-## 🗂️ Where Are Backups and Logs Stored?
-
-- 🔙 **Backups**:  
-  Saved to a separate `backups/` folder (not inside `gamedata`)  
-  e.g., `backups/2025-07-25_18-40-15/scripts/broken.script.bak`
-
-- 📝 **Logs**:  
-  All scans saved to `stalkerscriptsfixer logs/scan_log.txt`  
-  Older logs and backup logs go to `stalkerscriptsfixer logs/old logs/`
-
-- 🧾 **Open Logs**:
-  After scan, click `Open Log` to view it in Notepad or Notepad++ (if installed)
-
----
-
-## 📦 Supported Mods (growing list)
-
-- [x] GAMMA  
-- [x] EFP (Expanded Factions Project)  
-- [x] Radiophobia 3  
-- [x] Anomaly Anthalogy 2.0 OBT  
-- [x] Any Anomaly-based modpack  
-- [ ] Your pack? Open a GitHub Issue or submit a `fix_rules.json` PR!
-
----
-
-## 💬 Modder-Friendly
-
-- `fix_rules.json` allows you to define or suggest your own patch patterns  
-- Tool does not overwrite files without `.bak` backups  
-- Designed for safety — no blind rewrites of custom Lua  
-- Helpful during debugging script crashes
-
----
-
-## 🔐 Integrity Check
-
-- Each `.bak` file and patched file is logged with **SHA-256 hashes**  
-- Prevents tampering and allows rollback/verification of changes
-
----
-
-## 💾 Ideal for Low-End PCs
-
-- Low memory footprint  
-- Skips huge files (>5MB)  
-- Threaded scanning keeps GUI responsive  
-- Can run during modding sessions without game restart
-- 
----
-REMOVED SECTION
----
-
-## 🛠️ Manual CLI Usage (Advanced)
-
-```bash
-python stalker_fixer.py path/to/gamedata
-Add --fullscan to check entire gamedata
-
-Add --log-only to only scan and report errors (no fixing)
-
-📢 GitHub Releases
-We recommend downloading the .exe from GitHub Releases (upload manually if building from source).
-
-✅ Example
-Before:
-
-lua
-Copy
-Edit
 r_nvg.toggle_nightvision()
-After:
 
+actor:give_info_portion()
+(Auto-wraps with safe guards like if type(...) == "function")
+
+🧾 Auto-backup with timestamped .bak files before changes
+
+🧠 Detectable rules defined in fix_rules.json (fully modder-extensible)
+
+GUI and UX
+🖱️ Intuitive drag-and-drop interface
+
+🟩 Live scanning status (file list updating during scan)
+
+🔧 Cancel button to revert all changes
+
+🗒️ Log viewer (opens in Notepad or Notepad++ if available)
+
+💬 Display of scan results, patched files, and backup paths
+
+Integrity & Safety
+🔒 SHA-256 hash logging for each modified and backed-up file
+
+🧯 No overwrite without .bak safety
+
+🧠 Low memory usage and skips huge files >5MB
+
+🧵 Threaded scanning for a freeze-free experience
+
+🗂️ Output Structure
+Backups Folder:
+
+backups/YYYY-MM-DD_HH-MM-SS/
+
+e.g., backups/2025-07-25_18-40-15/scripts/broken.script.bak
+
+Logs Folder:
+
+stalkerscriptsfixer logs/scan_log.txt
+
+Older logs: stalkerscriptsfixer logs/old logs/
+
+🧪 How It Works (Summary)
+User drops a folder (e.g., gamedata/)
+
+Program scans all script/config files
+
+Identifies risky Lua/LTX code
+
+Applies safe patches
+
+Saves logs + backups
+
+User can review, revert, or keep changes
+
+💬 Mod Support
+Confirmed Supported Modpacks:
+ GAMMA
+
+ EFP
+
+ Radiophobia 3
+
+ Anomaly Anthalogy 2.0 OBT
+
+ All Anomaly-based modpacks
+
+ Others — submit your fix_rules.json or request support via email
+
+🛠 Planned Extras
+🧰 Developer Mode: Verbose debugging logs
+
+🔄 Auto-update checker (non-intrusive)
+
+🌐 GitHub integration for rule submissions
+
+📊 Export .json + .log reports for mod authors
+
+👤 CLI fallback mode: python stalker_fixer.py path/to/gamedata --fullscan
+
+🔐 Security Plan
+Each edit is SHA-256 hashed and logged
+
+Prevents silent tampering
+
+Encourages transparency and rollback safety
+
+Backup-first principle on all operations
+
+💻 Optimization Goals
+Designed for low-end PCs
+
+Light on RAM and CPU
+
+Multi-threaded scan engine
+
+No restarts required — safe to run between modding sessions
+
+🧑‍🔧 Developer Collaboration
+All patch logic stored in fix_rules.json
+
+Developers can submit rules via pull requests
+
+No blind rewrites; only clearly scoped pattern patches
+
+Built with open-source values and respect for mod authors
+
+🔎 Example Auto-Patch
 lua
 Copy
 Edit
-if r_nvg and type(r_nvg.toggle_nightvision) == "function" then
-    r_nvg.toggle_nightvision()
-end
-💡 Tip: Run After Modding!
-Always run this tool after:
-
-Installing a new mod
-
-Making LTX or Lua edits
-
-Seeing frequent crash logs about nil, attempt to call, or similar
-
-🧠 Credits
-Built with ❤️ for the S.T.A.L.K.E.R. modding community.
-Open for collaboration and modpack-specific rules.
-🛡️ License
-MIT License — free to use, share, and improve.
-
-FURTHERMORE:
-contact me at mangganern2023@gmail.com
-if you want your project to be supported by my work.
-
-:) Happy Hunting Stalker!
-
-/////////////////////////////////// 
-
-Example auto-patch:
-```lua
 -- Before
 r_nvg.toggle_nightvision()
 
@@ -159,5 +140,28 @@ r_nvg.toggle_nightvision()
 if type(r_nvg) == "table" and type(r_nvg.toggle_nightvision) == "function" then
     r_nvg.toggle_nightvision()
 end
-///////////////////////////////////
+📫 Contact
+Want your modpack officially supported?
+Got a rule to suggest or bug to report?
+
+📧 Email: mangganern2023@gmail.com
+
+⚖️ License
+MIT License — Free to use, share, modify.
+Open to collaboration. Made with ❤️ for the S.T.A.L.K.E.R. modding community.
+
+🏁 Milestone Status (as of planning)
+Task	Status
+GUI base built	✅ Done
+Core scanning engine	✅ Done
+Rule engine via fix_rules.json	✅ Done
+Logging and backup system	✅ Done
+Drag & Drop support	✅ Done
+Auto-hash logging	✅ Done
+Modpack profile support	🔄 In Progress
+Developer Mode	🔄 Planned
+CLI mode	🔄 Planned
+Auto-updater	❌ Future Feature
+
+
 
