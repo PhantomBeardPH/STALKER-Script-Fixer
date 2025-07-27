@@ -1,3 +1,6 @@
+////////////////
+---⚠️ Ignore ths codes! This is only a sample script for the project. For Review Only!
+////////////////
 import os
 import sys
 import time
