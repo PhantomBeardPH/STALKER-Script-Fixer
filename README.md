@@ -36,7 +36,33 @@ A comprehensive tool for fixing and analyzing STALKER game scripts with XRay log
   - Automatic backups
   - Configurable backup locations
   - Error recovery
+ 
+## Supported STALKER Trilogy major mods:
 
+  -Anomaly 1.5.3+
+  -Call of the Zone
+  -Dead Air
+  -EFP
+  -GAMMA 0.94+
+  -Gunslinger 
+  -Misery
+  -NLC7
+  -Oblivion Lost Remake
+  -Radiophobia 3 v1.19+
+  -STALKER R:E
+  -True Stalker
+  -Vector Of Alienation
+
+## To be implemented in next update(s):
+
+  -Lost Alpha
+  -Last Fallout Overhaul
+  -STALKER Anomaly Custom
+  -Old Good Stalker Remastered
+  -Sky Relamation Project
+  -ABR CS
+  -Rest of the Anomaly, Clear Sky and Call of Pripyat. SHOC base mods
+  
 ## Installation
 
 1. **Requirements**:
