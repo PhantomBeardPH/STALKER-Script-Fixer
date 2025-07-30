@@ -1,4 +1,4 @@
-# STALKER Script Fixer 1.02 - Bravo Edition (LATEST) by PhantomBeardPH (c) 2025
+# STALKER Script Fixer 1.02 - Bravo Edition (LATEST) by PhantomBeardPH 
 
 A comprehensive tool for fixing and analyzing STALKER game scripts with XRay log analysis capabilities.
 
