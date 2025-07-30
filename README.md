@@ -1,145 +1,52 @@
-Project Title: STALKER Auto Fixer 🛠️
-Objective: To build an automatic Lua/LTX error patching tool for major S.T.A.L.K.E.R. modpacks like GAMMA, EFP, Radiophobia 3, and Anomaly Anthalogy 2.0 OBT.
+# STALKER Script Fixer 1.02 - Bravo Edition (LATEST) by PhantomBeardPH (c) 2025
 
-🧠 Project Goal
-To scan and automatically fix risky scripting patterns across gamedata or mod folders by:
+A comprehensive tool for fixing and analyzing STALKER game scripts with XRay log analysis capabilities.
 
-Detecting problematic Lua/LTX logic
+## Features
 
-Wrapping them with safe guards
+- **Multi-Game Support**: Works with all major STALKER titles and popular mods including:
+  - Shadow of Chernobyl
+  - Clear Sky
+  - Call of Pripyat
+  - Anomaly/GAMMA
+  - Dead Air
+  - Misery
+  - STALKER RE:
+  - And many more
 
-Maintaining backups and logs
+- **Script Fixing**:
+  - Automatic correction of common script errors
+  - Lua syntax standardization
+  - LTX file formatting
+  - Anomaly, GAMMA, True Stalker and  STALKER RE:-specific fixes
 
-Reducing mod crashes for both developers and players
+- **XRay Log Analysis**:
+  - Parse and analyze XRay engine logs
+  - Identify fatal errors
+  - Suggest solutions
+  - AI-powered error analysis (with OpenAI API)
 
-✅ Planned Features
-Core Functionality
-🔍 Scans .script, .ltx, .ini, .xml, .txt files
+- **User-Friendly Interface**:
+  - Drag and drop support
+  - Progress tracking
+  - Detailed results reporting
+  - Multi-language support
 
-📂 Drag-and-drop GUI for folders or files
+- **Safety Features**:
+  - Automatic backups
+  - Configurable backup locations
+  - Error recovery
 
-📌 Option to scan entire gamedata or only recently modified files
+## Installation
 
-⚙️ Fixes risky Lua patterns like:
+1. **Requirements**:
+   - Python 3.8 or later
+   - Recommended: PIL/Pillow for logo display
 
-r_nvg.toggle_nightvision()
-
-actor:give_info_portion()
-(Auto-wraps with safe guards like if type(...) == "function")
-
-🧾 Auto-backup with timestamped .bak files before changes
-
-🧠 Detectable rules defined in fix_rules.json (fully modder-extensible)
-
-GUI and UX
-🖱️ Intuitive drag-and-drop interface
-
-🟩 Live scanning status (file list updating during scan)
-
-🔧 Cancel button to revert all changes
-
-🗒️ Log viewer (opens in Notepad or Notepad++ if available)
-
-💬 Display of scan results, patched files, and backup paths
-
-Integrity & Safety
-🔒 SHA-256 hash logging for each modified and backed-up file
-
-🧯 No overwrite without .bak safety
-
-🧠 Low memory usage and skips huge files >5MB
-
-🧵 Threaded scanning for a freeze-free experience
-
-🗂️ Output Structure
-Backups Folder:
-
-backups/YYYY-MM-DD_HH-MM-SS/
-
-e.g., backups/2025-07-25_18-40-15/scripts/broken.script.bak
-
-Logs Folder:
-
-stalkerscriptsfixer logs/scan_log.txt
-
-Older logs: stalkerscriptsfixer logs/old logs/
-
-🧪 How It Works (Summary)
-User drops a folder (e.g., gamedata/)
-
-Program scans all script/config files
-
-Identifies risky Lua/LTX code
-
-Applies safe patches
-
-Saves logs + backups
-
-User can review, revert, or keep changes
-
-💬 Mod Support
-Confirmed Supported Modpacks:
- GAMMA
-
- EFP
-
- Radiophobia 3
-
- Anomaly Anthalogy 2.0 OBT
-
- All Anomaly-based modpacks
-
- Others — submit your fix_rules.json or request support via email
-
-🛠 Planned Extras
-🧰 Developer Mode: Verbose debugging logs
-
-🔄 Auto-update checker (non-intrusive)
-
-🌐 GitHub integration for rule submissions
-
-📊 Export .json + .log reports for mod authors
-
-👤 CLI fallback mode: python stalker_fixer.py path/to/gamedata --fullscan
-
-🔐 Security Plan
-Each edit is SHA-256 hashed and logged
-
-Prevents silent tampering
-
-Encourages transparency and rollback safety
-
-Backup-first principle on all operations
-
-💻 Optimization Goals
-Designed for low-end PCs
-
-Light on RAM and CPU
-
-Multi-threaded scan engine
-
-No restarts required — safe to run between modding sessions
-
-🧑‍🔧 Developer Collaboration
-All patch logic stored in fix_rules.json
-
-Developers can submit rules via pull requests
-
-No blind rewrites; only clearly scoped pattern patches
-
-Built with open-source values and respect for mod authors
-
-🔎 Example Auto-Patch
-lua
-Copy
-Edit
--- Before
-r_nvg.toggle_nightvision()
-
--- After
-if type(r_nvg) == "table" and type(r_nvg.toggle_nightvision) == "function" then
-    r_nvg.toggle_nightvision()
-end
+2. **Install dependencies**:
+   ```bash
+   pip install pillow openai 
+   
 📫 Contact
 Want your modpack officially supported?
 Got a rule to suggest or bug to report?
@@ -150,17 +57,18 @@ Got a rule to suggest or bug to report?
 MIT License — Free to use, share, modify.
 Open to collaboration. Made with ❤️ for the S.T.A.L.K.E.R. modding community.
 
-🏁 Milestone Status (as of planning)
-Task	Status
+🏁 Milestone Status (as 1.02 Bravo)
+Task	Status:
 GUI base built	✅ Done
 Core scanning engine	✅ Done
-Rule engine via fix_rules.json	✅ Done
-Logging and backup system	✅ Done
+Rule engine per game version/mods	✅ Done
+Backup system	✅ Done
 Drag & Drop support	✅ Done
-Auto-hash logging	✅ Done
-Modpack profile support	🔄 In Progress
-Developer Mode	🔄 Planned
-CLI mode	🔄 Planned
+AI Assisted Fix support capability	✅ Done
+Modpack profile support	✅ Done
+Multi-Language support and open for contributors ✅ Done
+Developer Mode	🔄 Planned in next updates
+CLI mode	🔄 Planned in next updates
 Auto-updater	❌ Future Feature
 
 
