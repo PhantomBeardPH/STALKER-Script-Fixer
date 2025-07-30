@@ -1,0 +1,3 @@
+Some or most of my translations into different languages may be incorrect or not in the correct language translation. I apologize in advance if any translations are incorrect. You can manually fix your language saved in the (.json) file found in the 'languages' folder through the 'guide' included in Readme.md or Readme.docx.
+
+In case the 'languages' folder is accidentally deleted or it is not in the directory, you can create a new one and extract the contents of 'languagepacks.7z' into the new folder you created. Here you can also edit the specific language (.json) to its correct translation as you wish.
