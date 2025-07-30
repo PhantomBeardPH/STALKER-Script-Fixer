@@ -97,5 +97,12 @@ Developer Mode	🔄 Planned in next updates
 CLI mode	🔄 Planned in next updates
 Auto-updater	❌ Future Feature
 
+💖 Support the Developer
+Hi! I’m a solo developer building this tool in my free time. If you find it helpful and would like to support its future updates, feel free to buy me a coffee — totally optional!
+
+☕ Buy Me a Coffee [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-phantombeardph-yellow?style=flat-square&logo=buy-me-a-coffee)](https://buymeacoffee.com/phantombeardph)
+
+Your support — even just using or sharing the tool — really means a lot. Thank you!
+
 
 
