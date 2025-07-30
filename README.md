@@ -4,7 +4,7 @@ A comprehensive tool for fixing and analyzing STALKER game scripts with XRay log
 
 ## Features
 
-- **Multi-Game Support**: Works with all major STALKER titles and popular mods including:
+- **Multi-Game Support**: Works with most major STALKER titles and popular mods including:
   - Shadow of Chernobyl
   - Clear Sky
   - Call of Pripyat
