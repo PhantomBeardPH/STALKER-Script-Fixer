@@ -1,0 +1,1038 @@
+#!/usr/bin/env python3
+"""
+STALKER Scripts Fixer v1.02 - Bravo (with XRay Log Analysis)
+Author: PhantomBeardPH - mangganern2023@gmail.com
+Version: 1.02
+"""
+
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox, scrolledtext
+import os
+import json
+import shutil
+from pathlib import Path
+from dataclasses import dataclass, asdict, field
+from enum import Enum
+import webbrowser
+import sys
+import ctypes
+import re  # Added for log parsing
+import openai  # Added for AI analysis
+
+# Import PIL only if available
+try:
+    from PIL import Image, ImageTk
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+    print("[Warning] PIL not available. Logo display will be disabled.")
+
+# --- Manifest Embedding Code (Runs on startup) ---
+def embed_manifest():
+    """Embeds a Windows manifest to declare execution level and compatibility."""
+    if sys.platform != 'win32':
+        return  # Only works on Windows
+
+    try:
+        # Import Windows-specific types
+        import ctypes.wintypes
+        
+        # Define the manifest XML as a string
+        manifest = '''
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+            <assemblyIdentity
+                version="1.0.0.0"
+                processorArchitecture="*"
+                name="STALKER_Script_Fixer"
+                type="win32"
+            />
+            <description>STALKER Script Fixer - Bravo</description>
+            <dependency>
+                <dependentAssembly>
+                    <assemblyIdentity
+                        type="win32"
+                        name="Microsoft.Windows.Common-Controls"
+                        version="6.0.0.0"
+                        processorArchitecture="*"
+                        publicKeyToken="6595b64144ccf1df"
+                        language="*"
+                    />
+                </dependentAssembly>
+            </dependency>
+            <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+                <security>
+                    <requestedPrivileges>
+                        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+                    </requestedPrivileges>
+                </security>
+            </trustInfo>
+            <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+                <application>
+                    <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" /> <!-- Windows 10 -->
+                    <supportedOS Id="{1f676c76-80e1-4239-95bb-83d0f6d0da78}" /> <!-- Windows 11 -->
+                </application>
+            </compatibility>
+        </assembly>
+        '''
+
+        # Write manifest to a temporary file
+        temp_manifest = Path("temp.manifest")
+        temp_manifest.write_text(manifest, encoding='utf-8')
+
+        # Load Windows API
+        kernel32 = ctypes.windll.kernel32
+        kernel32.GetCurrentProcess.restype = ctypes.wintypes.HANDLE
+
+        # Constants
+        ACTCTX_FLAG_RESOURCE_NAME_VALID = 0x008
+        ACTCTX_FLAG_SET_PROCESS_DEFAULT = 0x010
+
+        class ACTCTX(ctypes.Structure):
+            _fields_ = [
+                ('cbSize', ctypes.wintypes.ULONG),
+                ('dwFlags', ctypes.wintypes.DWORD),
+                ('lpSource', ctypes.wintypes.LPCWSTR),
+                ('wProcessorArchitecture', ctypes.wintypes.WORD),
+                ('wLangId', ctypes.wintypes.WORD),
+                ('lpAssemblyDirectory', ctypes.wintypes.LPCWSTR),
+                ('lpResourceName', ctypes.wintypes.LPCWSTR),
+                ('lpApplicationName', ctypes.wintypes.LPCWSTR),
+                ('hModule', ctypes.wintypes.HANDLE),
+            ]
+
+        # Configure activation context
+        actctx = ACTCTX()
+        actctx.cbSize = ctypes.sizeof(ACTCTX)
+        actctx.lpSource = str(temp_manifest.resolve())
+        actctx.lpResourceName = ctypes.c_wchar_p("1")  # RT_MANIFEST
+        actctx.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_SET_PROCESS_DEFAULT
+
+        # Create and activate the context
+        hActCtx = kernel32.CreateActCtxW(ctypes.byref(actctx))
+        if hActCtx == -1:
+            raise ctypes.WinError(ctypes.get_last_error())
+
+        cookie = ctypes.wintypes.ULONG()
+        if not kernel32.ActivateActCtx(hActCtx, ctypes.byref(cookie)):
+            raise ctypes.WinError(ctypes.get_last_error())
+
+        # Clean up (optional)
+        temp_manifest.unlink(missing_ok=True)
+
+    except AttributeError as e:
+        print(f"[Warning] Manifest embedding failed: {e}")
+        print("[Info] This is normal on non-Windows systems or older Python versions")
+    except Exception as e:
+        print(f"[Warning] Manifest embedding failed: {e}")
+        pass  # Continue execution
+
+# Execute manifest embedding first
+embed_manifest()
+
+# ======================
+# SPLASH SCREEN
+# ======================
+def show_splash_screen():
+    """Show splash screen with logo and program info"""
+    splash = tk.Toplevel()
+    splash.title("STALKER Script Fixer")
+    splash.geometry("400x500")
+    splash.overrideredirect(True)  # Remove window decorations
+    
+    # Center the splash screen on screen
+    screen_width = splash.winfo_screenwidth()
+    screen_height = splash.winfo_screenheight()
+    x = (screen_width - 400) // 2
+    y = (screen_height - 500) // 2
+    splash.geometry(f"400x500+{x}+{y}")
+    
+    # Create main frame
+    frame = ttk.Frame(splash)
+    frame.pack(fill=tk.BOTH, expand=True)
+    
+    if PIL_AVAILABLE:
+        try:
+            # Load logo image from resources directory
+            logo_path = Path("resources") / "logo.png"  # Adjust filename as needed
+            if logo_path.exists():
+                img = Image.open(logo_path)
+                img = img.resize((300, 300), Image.LANCZOS)  # Resize as needed
+                logo_img = ImageTk.PhotoImage(img)
+                
+                logo_label = ttk.Label(frame, image=logo_img)
+                logo_label.image = logo_img  # Keep reference
+                logo_label.pack(pady=20)
+            else:
+                # Fallback if logo file doesn't exist
+                ttk.Label(frame, text="STALKER", font=("Arial", 24, "bold")).pack(pady=50)
+        except Exception as e:
+            print(f"Error loading logo: {e}")
+            # Fallback if logo can't be loaded
+            ttk.Label(frame, text="STALKER", font=("Arial", 24, "bold")).pack(pady=50)
+    else:
+        # Fallback if PIL not available
+        ttk.Label(frame, text="STALKER", font=("Arial", 24, "bold")).pack(pady=50)
+    
+    # Program info
+    ttk.Label(frame, text="STALKER Script Fixer", font=("Arial", 18, "bold")).pack(pady=5)
+    ttk.Label(frame, text="v1.02 - Bravo Edition", font=("Arial", 12)).pack()
+    ttk.Label(frame, text="by PhantomBeardPH", font=("Arial", 10)).pack(pady=10)
+    ttk.Label(frame, text="© 2025 All Rights Reserved", font=("Arial", 9)).pack(pady=20)
+    
+    # Close after 3 seconds
+    splash.after(3000, splash.destroy)
+    return splash
+
+# ======================
+# CORE CONFIGURATION
+# ======================
+DEFAULT_BG_COLOR = "#f0f0f0"  # Light gray
+SUPPORTED_GAMES = [
+    "Shadow of Chernobyl", "Clear Sky", "Call of Pripyat",
+    "Anomaly", "GAMMA", "Dead Air", "Misery", "Gunslinger",
+    "NLC7", "Oblivion Lost Remake", "Vector of Alienation",
+    "Call of the Zone", "Radiophobia 3", "EFP", "True Stalker", "STALKER RE:"
+]
+
+# Supported languages
+SUPPORTED_LANGUAGES = ["english", "ukrainian", "russian", "slovakian", "polish", "Khmer", "thai", "vietnamese", "spanish", "portugese", "malay", "indonesian", "tagalog"]
+
+# ======================
+# DATA STRUCTURES
+# ======================
+class GameVersion(Enum):
+    SHADOW_OF_CHERNOBYL = "Shadow of Chernobyl"
+    CLEAR_SKY = "Clear Sky"
+    CALL_OF_PRIPYAT = "Call of Pripyat"
+    ANOMALY = "Anomaly"
+    GAMMA = "GAMMA"
+    DEAD_AIR = "Dead Air"
+    MISERY = "Misery"
+    GUNSLINGER = "Gunslinger"
+    NLC7 = "NLC7"
+    OBLIVION_LOST = "Oblivion Lost Remake"
+    VECTOR = "Vector of Alienation"
+    COTZ = "Call of the Zone"
+    RADIOPHOBIA = "Radiophobia 3"
+    EFP = "EFP"
+    TRUE_STALKER = "True Stalker"
+    STALKER_RE = "STALKER RE:"  # Added STALKER RE: support
+
+@dataclass
+class AppSettings:
+    bg_color: str = DEFAULT_BG_COLOR
+    game_version: str = "Anomaly"
+    backup_location: str = ""
+    openai_key: str = ""
+    language: str = "english"
+
+@dataclass
+class FixResult:
+    file_path: str
+    fixes: list = field(default_factory=list)
+    errors: list = field(default_factory=list)
+    success: bool = False
+
+# ======================
+# MAIN APPLICATION
+# ======================
+class STALKERFixerApp:
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.withdraw()  # Hide main window initially
+        
+        # Show splash screen first
+        splash = show_splash_screen()
+        self.root.update()  # Force update to show splash
+        
+        # Wait for splash screen to close
+        self.root.after(3000, self.initialize_main_app)
+        
+    def initialize_main_app(self):
+        """Initialize the main application after splash screen"""
+        self.root.deiconify()  # Show main window
+        self.root.title("STALKER Script Fixer v1.02")
+        self.root.geometry("1000x700")
+        self.root.minsize(800, 600)
+        
+        # Initialize languages folder and default language
+        self.initialize_languages_folder()
+        
+        # Load language files
+        self.load_languages()
+        
+        # Load settings
+        self.settings = self.load_settings()
+        self.current_files = []
+        self.is_processing = False
+        
+        # Setup UI
+        self.setup_ui()
+        self.apply_settings()
+        self.update_ui_language()
+        
+    def initialize_languages_folder(self):
+        """Initialize the languages folder and create default English file if needed"""
+        self.languages_dir = Path("languages")
+        
+        # Create languages folder if it doesn't exist
+        if not self.languages_dir.exists():
+            self.languages_dir.mkdir()
+            
+        # Check if folder is empty or doesn't contain any JSON files
+        has_json_files = any(file.suffix == '.json' for file in self.languages_dir.iterdir()) if self.languages_dir.exists() else False
+        
+        if not has_json_files:
+            # Create default English language file
+            default_lang = {
+                "language": "english",
+                "strings": {
+                    "main_window_title": "STALKER Script Fixer v1.02 - Bravo",
+                    "upload_button": "Upload",
+                    "settings_button": "Settings",
+                    "about_button": "About",
+                    "api_keys_button": "API Keys",
+                    "xray_log_button": "Upload XRay Log",
+                    "drop_area_text": "Drag and drop files/folders here\n\nSupported files: .lua, .ltx, .script",
+                    "progress_label": "Progress:",
+                    "status_ready": "Ready",
+                    "status_processing": "Processing...",
+                    "select_input_title": "Select Input",
+                    "select_input_message": "Would you like to select individual files?",
+                    "select_input_detail": "Select 'No' to choose a folder instead",
+                    "no_files_warning": "No supported files found in the selected folder!",
+                    "backup_prompt": "No backup location set. Would you like to configure one now?",
+                    "backup_detail": "A backup will be created before modifying any files",
+                    "results_header": "=== Results ===",
+                    "results_processed": "Files processed: {}",
+                    "results_success": "Successful fixes: {}",
+                    "results_total": "Total fixes: {}",
+                    "results_errors": "Errors: {}",
+                    "settings_title": "Settings",
+                    "bg_color_label": "Background Color:",
+                    "game_version_label": "Game/Mod Version:",
+                    "backup_location_label": "Backup Location:",
+                    "language_label": "Language:",
+                    "save_button": "Save",
+                    "browse_button": "Browse",
+                    "api_config_title": "API Configuration",
+                    "api_key_label": "OpenAI API Key:",
+                    "api_key_hint": "Leave blank to disable AI features",
+                    "about_title": "About",
+                    "version_label": "Version 1.02",
+                    "close_button": "Close",
+                    "settings_saved_message": "Settings saved successfully!",
+                    "api_saved_message": "API key saved successfully!",
+                    "xray_log_title": "XRay Log Analysis",
+                    "xray_log_error": "Error: Could not read the XRay log file",
+                    "xray_log_no_error": "No FATAL ERROR found in the log file",
+                    "xray_log_solution": "Suggested Solution:",
+                    "xray_log_files": "Affected Files:",
+                    "xray_log_manual": "Manual Analysis Required",
+                    "xray_log_ai_required": "API key required for AI analysis",
+                    "xray_log_ai_error": "Error during AI analysis"
+                }
+            }
+            
+            # Save default language file
+            default_file = self.languages_dir / "lang_english.json"
+            with open(default_file, 'w', encoding='utf-8') as f:
+                json.dump(default_lang, f, indent=2, ensure_ascii=False)
+        
+    def load_languages(self):
+        """Load all language files from the languages folder"""
+        self.languages = {}
+        
+        # Load only .json files from the languages folder
+        for lang_file in self.languages_dir.glob('*.json'):
+            try:
+                with open(lang_file, 'r', encoding='utf-8') as f:
+                    lang_data = json.load(f)
+                    lang_name = lang_data.get('language', lang_file.stem.replace('lang_', ''))
+                    self.languages[lang_name] = lang_data
+            except (FileNotFoundError, json.JSONDecodeError) as e:
+                print(f"Warning: Could not load language file {lang_file}: {str(e)}")
+        
+        # Fallback to English if no languages loaded
+        if not self.languages:
+            self.initialize_languages_folder()
+            english_file = self.languages_dir / "lang_english.json"
+            with open(english_file, 'r', encoding='utf-8') as f:
+                self.languages["english"] = json.load(f)
+                
+    def get_translation(self, key):
+        """Get translation for the current language"""
+        lang = self.settings.language
+        if lang in self.languages:
+            try:
+                return self.languages[lang]["strings"][key]
+            except KeyError:
+                pass
+        # Fallback to English if translation not found
+        try:
+            return self.languages["english"]["strings"][key]
+        except KeyError:
+            return key  # Return the key itself if no translation found
+            
+    def update_ui_language(self):
+        """Update all UI elements with current language"""
+        # Main window
+        self.root.title(self.get_translation("main_window_title"))
+        
+        # Buttons
+        self.upload_button.config(text=self.get_translation("upload_button"))
+        self.settings_button.config(text=self.get_translation("settings_button"))
+        self.about_button.config(text=self.get_translation("about_button"))
+        self.api_keys_button.config(text=self.get_translation("api_keys_button"))
+        self.xray_log_button.config(text=self.get_translation("xray_log_button"))
+        
+        # Drop area
+        self.drop_area.config(text=self.get_translation("drop_area_text"))
+        
+        # Progress
+        self.progress_label.config(text=self.get_translation("progress_label"))
+        self.status_var.set(self.get_translation("status_ready"))
+    
+    def setup_ui(self):
+        """Initialize the user interface"""
+        # Configure main window
+        self.root.configure(bg=self.settings.bg_color)
+        
+        # Header Frame
+        header_frame = ttk.Frame(self.root)
+        header_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        # Logo and Title
+        ttk.Label(header_frame, 
+                text=self.get_translation("main_window_title"), 
+                font=("Arial", 16, "bold")).pack(side=tk.LEFT)
+        ttk.Label(header_frame, 
+                text="v1.02", 
+                font=("Arial", 10)).pack(side=tk.LEFT, padx=10)
+        
+        # Button Panel
+        button_frame = ttk.Frame(self.root)
+        button_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        self.upload_button = ttk.Button(button_frame, 
+                                     text=self.get_translation("upload_button"), 
+                                     command=self.show_upload_dialog)
+        self.upload_button.pack(side=tk.LEFT, padx=5)
+        
+        self.settings_button = ttk.Button(button_frame, 
+                                       text=self.get_translation("settings_button"), 
+                                       command=self.show_settings)
+        self.settings_button.pack(side=tk.LEFT, padx=5)
+        
+        self.about_button = ttk.Button(button_frame, 
+                                     text=self.get_translation("about_button"), 
+                                     command=self.show_about)
+        self.about_button.pack(side=tk.LEFT, padx=5)
+        
+        self.api_keys_button = ttk.Button(button_frame, 
+                                       text=self.get_translation("api_keys_button"), 
+                                       command=self.show_api_dialog)
+        self.api_keys_button.pack(side=tk.LEFT, padx=5)
+        
+        # New XRay Log Button
+        self.xray_log_button = ttk.Button(button_frame, 
+                                       text=self.get_translation("xray_log_button"), 
+                                       command=self.upload_xray_log)
+        self.xray_log_button.pack(side=tk.LEFT, padx=5)
+        
+        # Main Content
+        main_frame = ttk.Frame(self.root)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Drag and Drop Area
+        self.drop_area = tk.Label(main_frame, 
+                                text=self.get_translation("drop_area_text"),
+                                bg="white", 
+                                relief=tk.SUNKEN,
+                                padx=20, pady=40)
+        self.drop_area.pack(fill=tk.BOTH, expand=True, pady=10)
+        
+        # Process Window
+        self.process_text = scrolledtext.ScrolledText(main_frame, 
+                                                    height=15,
+                                                    state=tk.DISABLED)
+        self.process_text.pack(fill=tk.BOTH, expand=True)
+        
+        # Progress Bar
+        progress_frame = ttk.Frame(self.root)
+        progress_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        self.progress_label = ttk.Label(progress_frame, 
+                                      text=self.get_translation("progress_label"))
+        self.progress_label.pack(side=tk.LEFT)
+        
+        self.progress = ttk.Progressbar(progress_frame, 
+                                      orient=tk.HORIZONTAL,
+                                      length=300,
+                                      mode='determinate')
+        self.progress.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=10)
+        
+        self.status_var = tk.StringVar(value=self.get_translation("status_ready"))
+        ttk.Label(progress_frame, 
+                textvariable=self.status_var).pack(side=tk.RIGHT)
+        
+        # Configure drag and drop
+        self.drop_area.bind("<Button-1>", lambda e: self.show_upload_dialog())
+    
+    def apply_settings(self):
+        """Apply current settings to UI"""
+        self.root.configure(bg=self.settings.bg_color)
+        self.drop_area.configure(bg="white")
+        
+    # ======================
+    # XRAY LOG ANALYSIS
+    # ======================
+    def upload_xray_log(self):
+        """Handle XRay log file upload and analysis"""
+        file_path = filedialog.askopenfilename(
+            title=self.get_translation("xray_log_title"),
+            filetypes=[("XRay Log Files", "*.log"), ("All Files", "*.*")]
+        )
+        
+        if not file_path:
+            return  # User canceled
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                log_content = f.read()
+            
+            # Find the last FATAL ERROR in the log
+            fatal_error = self.extract_last_fatal_error(log_content)
+            
+            if not fatal_error:
+                messagebox.showinfo(
+                    self.get_translation("xray_log_title"),
+                    self.get_translation("xray_log_no_error")
+                )
+                return
+            
+            # Show analysis window
+            self.show_xray_analysis(fatal_error, log_content)
+            
+        except Exception as e:
+            messagebox.showerror(
+                self.get_translation("xray_log_title"),
+                f"{self.get_translation('xray_log_error')}: {str(e)}"
+            )
+    
+    def extract_last_fatal_error(self, log_content):
+        """Extract the last FATAL ERROR from log content"""
+        # This pattern looks for FATAL ERROR entries in the log
+        fatal_pattern = re.compile(
+            r'(FATAL ERROR.*?)(?=\n\S|\Z)', 
+            re.DOTALL | re.IGNORECASE
+        )
+        
+        matches = list(fatal_pattern.finditer(log_content))
+        if not matches:
+            return None
+        
+        # Get the last fatal error
+        last_error = matches[-1].group(1).strip()
+        return last_error
+    
+    def show_xray_analysis(self, fatal_error, full_log):
+        """Show the XRay log analysis window"""
+        analysis_window = tk.Toplevel(self.root)
+        analysis_window.title(self.get_translation("xray_log_title"))
+        analysis_window.geometry("800x600")
+        
+        # Create notebook for tabs
+        notebook = ttk.Notebook(analysis_window)
+        notebook.pack(fill=tk.BOTH, expand=True)
+        
+        # Error tab
+        error_frame = ttk.Frame(notebook)
+        notebook.add(error_frame, text="Error Details")
+        
+        # Solution tab
+        solution_frame = ttk.Frame(notebook)
+        notebook.add(solution_frame, text="Solution")
+        
+        # Full log tab (for reference)
+        full_log_frame = ttk.Frame(notebook)
+        notebook.add(full_log_frame, text="Full Log (Reference)")
+        
+        # Populate error tab
+        error_text = scrolledtext.ScrolledText(error_frame, wrap=tk.WORD)
+        error_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        error_text.insert(tk.END, fatal_error)
+        error_text.config(state=tk.DISABLED)
+        
+        # Populate full log tab
+        full_log_text = scrolledtext.ScrolledText(full_log_frame, wrap=tk.WORD)
+        full_log_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        full_log_text.insert(tk.END, full_log)
+        full_log_text.config(state=tk.DISABLED)
+        
+        # Analyze and populate solution tab
+        self.analyze_error_and_provide_solution(
+            fatal_error, full_log, solution_frame
+        )
+    
+    def analyze_error_and_provide_solution(self, fatal_error, full_log, solution_frame):
+        """Analyze the error and provide solution"""
+        # First try to extract file references from the error
+        file_references = self.extract_file_references(fatal_error)
+        
+        # Create solution text widget
+        solution_text = scrolledtext.ScrolledText(solution_frame, wrap=tk.WORD)
+        solution_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Add header
+        solution_text.insert(tk.END, f"{self.get_translation('xray_log_error')}:\n", "bold")
+        solution_text.insert(tk.END, f"{fatal_error}\n\n")
+        
+        # Add file references if found
+        if file_references:
+            solution_text.insert(tk.END, f"{self.get_translation('xray_log_files')}:\n", "bold")
+            for file_ref in file_references:
+                solution_text.insert(tk.END, f"- {file_ref}\n", "file_ref")
+            solution_text.insert(tk.END, "\n")
+        
+        # Try to get AI solution if API key is available
+        ai_solution = None
+        if self.settings.openai_key:
+            try:
+                ai_solution = self.get_ai_solution(fatal_error, full_log)
+            except Exception as e:
+                solution_text.insert(tk.END, f"{self.get_translation('xray_log_ai_error')}:\n", "bold")
+                solution_text.insert(tk.END, str(e) + "\n\n")
+        
+        if ai_solution:
+            solution_text.insert(tk.END, f"{self.get_translation('xray_log_solution')} (AI):\n", "bold")
+            solution_text.insert(tk.END, ai_solution + "\n")
+        else:
+            if not self.settings.openai_key:
+                solution_text.insert(tk.END, f"{self.get_translation('xray_log_ai_required')}\n\n", "bold")
+            solution_text.insert(tk.END, f"{self.get_translation('xray_log_solution')}:\n", "bold")
+            solution_text.insert(tk.END, f"{self.get_translation('xray_log_manual')}\n")
+        
+        # Configure tags for formatting
+        solution_text.tag_config("bold", font=("Arial", 10, "bold"))
+        solution_text.tag_config("file_ref", foreground="blue")
+        solution_text.config(state=tk.DISABLED)
+    
+    def extract_file_references(self, error_text):
+        """Extract file references from error text"""
+        # Patterns to match common file references in XRay logs
+        patterns = [
+            r'File\s*:\s*(.*?\.\w+)',  # "File: somefile.ext"
+            r'\"(.*?\.\w+)\"',          # Quoted filenames
+            r'\b(\w+\.\w{3,4})\b',       # Basic filename.ext pattern
+            r'Loading\s(.*?\.\w+)',      # "Loading somefile.ext"
+            r'Can\'t\sopen\s(.*?\.\w+)'  # "Can't open somefile.ext"
+        ]
+        
+        found_files = set()
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, error_text, re.IGNORECASE)
+            for match in matches:
+                # Skip common false positives
+                if not any(x in match.lower() for x in ['system', 'windows', 'dll', 'exe']):
+                    found_files.add(match)
+        
+        return sorted(found_files)
+    
+    def get_ai_solution(self, error_text, full_log):
+        """Get AI-powered solution for the error"""
+        if not self.settings.openai_key:
+            return None
+        
+        openai.api_key = self.settings.openai_key
+        
+        # Create a focused prompt for the AI
+        prompt = f"""
+        Analyze this STALKER XRay Engine error and provide a concise solution. 
+        Focus on practical steps the user can take to fix the issue.
+        
+        Error:
+        {error_text}
+        
+        Provide:
+        1. A brief explanation of the error in simple terms
+        2. Step-by-step solution
+        3. Specific files to check (highlight them)
+        4. Common causes for this type of error
+        
+        Keep the response under 200 words and use simple language.
+        """
+        
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant specialized in fixing STALKER game errors."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=400,
+                temperature=0.7
+            )
+            
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"AI analysis error: {e}")
+            return None
+    
+    # ======================
+    # CORE FUNCTIONALITY
+    # ======================
+    def show_upload_dialog(self):
+        """Show file/folder selection dialog"""
+        choice = messagebox.askquestion(
+            self.get_translation("select_input_title"),
+            self.get_translation("select_input_message"),
+            detail=self.get_translation("select_input_detail")
+        )
+        
+        if choice == 'yes':
+            files = filedialog.askopenfilenames(
+                title=self.get_translation("select_input_title"),
+                filetypes=[("STALKER Files", "*.lua *.ltx *.script")]
+            )
+            if files:
+                self.current_files = list(files)
+                self.process_files()
+        else:
+            folder = filedialog.askdirectory(
+                title=self.get_translation("select_input_title")
+            )
+            if folder:
+                self.scan_folder(folder)
+    
+    def scan_folder(self, folder_path):
+        """Scan folder for supported files"""
+        self.current_files = []
+        for root, _, files in os.walk(folder_path):
+            for file in files:
+                if file.endswith(('.lua', '.ltx', '.script')):
+                    self.current_files.append(os.path.join(root, file))
+        
+        if self.current_files:
+            self.process_files()
+        else:
+            messagebox.showwarning(
+                self.get_translation("no_files_warning"),
+                self.get_translation("no_files_warning")
+            )
+    
+    def process_files(self):
+        """Process all selected files"""
+        if not self.current_files:
+            return
+            
+        # Ask for backup location if not set
+        if not self.settings.backup_location:
+            self.ask_backup_location()
+            if not self.settings.backup_location:
+                return
+        
+        # Start processing
+        self.is_processing = True
+        self.status_var.set(self.get_translation("status_processing"))
+        self.progress["value"] = 0
+        self.progress["maximum"] = len(self.current_files)
+        
+        # Clear process window
+        self.process_text.config(state=tk.NORMAL)
+        self.process_text.delete(1.0, tk.END)
+        self.process_text.config(state=tk.DISABLED)
+        
+        # Process each file
+        results = []
+        for i, file_path in enumerate(self.current_files, 1):
+            if not self.is_processing:
+                break
+                
+            result = self.fix_file(file_path)
+            results.append(result)
+            
+            # Update progress
+            self.progress["value"] = i
+            self.status_var.set(f"{self.get_translation('status_processing')} {i}/{len(self.current_files)}")
+            self.root.update()
+        
+        # Show results
+        self.show_results(results)
+        self.status_var.set(self.get_translation("status_ready"))
+    
+    def fix_file(self, file_path):
+        """Fix a single file"""
+        result = FixResult(file_path=file_path)
+        
+        try:
+            # Create backup
+            backup_dir = os.path.join(self.settings.backup_location, "backup")
+            os.makedirs(backup_dir, exist_ok=True)
+            shutil.copy2(file_path, backup_dir)
+            
+            # Read file
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Apply fixes based on file type
+            fixes = []
+            
+            if file_path.endswith('.lua'):
+                # Lua fixes
+                if "function(" in content and "function (" not in content:
+                    content = content.replace("function(", "function (")
+                    fixes.append("Fixed function spacing")
+                
+                # Check brackets
+                if content.count('(') != content.count(')'):
+                    result.errors.append("Mismatched parentheses")
+            
+            elif file_path.endswith('.ltx'):
+                # LTX fixes
+                if " = " in content:
+                    content = content.replace(" = ", "=")
+                    fixes.append("Standardized LTX formatting")
+                
+                # Check sections
+                if "[" in content and "]" not in content:
+                    result.errors.append("Missing section closing bracket")
+            
+            # RE:-specific fixes
+            if self.settings.game_version == "STALKER RE:":
+                if file_path.endswith('.script'):
+                    # Fix path separators
+                    original_content = content
+                    content = content.replace("\\", "/")
+                    if content != original_content:
+                        fixes.append("RE: path standardization")
+                
+                # Entity fixes
+                if "unknown_entity" in content:
+                    content = content.replace("unknown_entity", "custom_entity")
+                    fixes.append("RE: entity fix")
+            
+            # Write fixed file
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            result.fixes = fixes
+            result.success = True
+            
+            # Log to process window
+            self.log_message(f"Processed: {os.path.basename(file_path)}")
+            if fixes:
+                self.log_message(f" - Applied fixes: {', '.join(fixes)}")
+            if result.errors:
+                self.log_message(f" - Errors: {', '.join(result.errors)}")
+            
+        except Exception as e:
+            result.errors.append(str(e))
+            self.log_message(f"Error processing {file_path}: {str(e)}")
+        
+        return result
+    
+    def show_results(self, results):
+        """Display processing results"""
+        success_count = sum(1 for r in results if r.success)
+        fixed_count = sum(len(r.fixes) for r in results)
+        error_count = sum(len(r.errors) for r in results)
+        
+        # Show summary popup for bulk processing
+        if len(results) > 5:
+            result_window = tk.Toplevel(self.root)
+            result_window.title(self.get_translation("results_header"))
+            result_window.geometry("600x400")
+            
+            text = scrolledtext.ScrolledText(result_window)
+            text.pack(fill=tk.BOTH, expand=True)
+            
+            text.insert(tk.END, f"{self.get_translation('results_processed').format(len(results))}\n")
+            text.insert(tk.END, f"{self.get_translation('results_success').format(success_count)}\n")
+            text.insert(tk.END, f"{self.get_translation('results_total').format(fixed_count)}\n")
+            text.insert(tk.END, f"{self.get_translation('results_errors').format(error_count)}\n\n")
+            
+            for result in results:
+                if result.errors:
+                    text.insert(tk.END, f"{os.path.basename(result.file_path)}:\n")
+                    for error in result.errors:
+                        text.insert(tk.END, f" - {error}\n")
+            
+            text.config(state=tk.DISABLED)
+        else:
+            # For small batches, show in main window
+            self.log_message(f"\n{self.get_translation('results_header')}")
+            self.log_message(self.get_translation('results_processed').format(len(results)))
+            self.log_message(self.get_translation('results_success').format(success_count))
+            self.log_message(self.get_translation('results_total').format(fixed_count))
+            self.log_message(self.get_translation('results_errors').format(error_count))
+    
+    # ======================
+    # SETTINGS DIALOGS
+    # ======================
+    def show_settings(self):
+        """Show settings dialog"""
+        settings_window = tk.Toplevel(self.root)
+        settings_window.title(self.get_translation("settings_title"))
+        settings_window.geometry("500x400")
+        
+        # Background Color
+        ttk.Label(settings_window, text=self.get_translation("bg_color_label")).pack(pady=(10, 0))
+        self.color_var = tk.StringVar(value=self.settings.bg_color)
+        color_entry = ttk.Entry(settings_window, textvariable=self.color_var)
+        color_entry.pack()
+        
+        # Game Version
+        ttk.Label(settings_window, text=self.get_translation("game_version_label")).pack(pady=(10, 0))
+        self.game_var = tk.StringVar(value=self.settings.game_version)
+        game_combo = ttk.Combobox(settings_window, 
+                                 textvariable=self.game_var,
+                                 values=SUPPORTED_GAMES)
+        game_combo.pack()
+        
+        # Backup Location
+        ttk.Label(settings_window, text=self.get_translation("backup_location_label")).pack(pady=(10, 0))
+        self.backup_var = tk.StringVar(value=self.settings.backup_location)
+        backup_frame = ttk.Frame(settings_window)
+        backup_frame.pack(fill=tk.X)
+        
+        backup_entry = ttk.Entry(backup_frame, textvariable=self.backup_var)
+        backup_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        ttk.Button(backup_frame, 
+                  text=self.get_translation("browse_button"), 
+                  command=self.browse_backup).pack(side=tk.RIGHT)
+        
+        # Language Selection
+        ttk.Label(settings_window, text=self.get_translation("language_label")).pack(pady=(10, 0))
+        self.lang_var = tk.StringVar(value=self.settings.language)
+        lang_combo = ttk.Combobox(settings_window, 
+                                textvariable=self.lang_var,
+                                values=list(self.languages.keys()))  # Only show loaded languages
+        lang_combo.pack()
+        
+        # Save Button
+        ttk.Button(settings_window, 
+                  text=self.get_translation("save_button"), 
+                  command=lambda: self.save_settings(settings_window)).pack(pady=20)
+    
+    def browse_backup(self):
+        """Select backup directory"""
+        folder = filedialog.askdirectory(title=self.get_translation("backup_location_label"))
+        if folder:
+            self.backup_var.set(folder)
+    
+    def ask_backup_location(self):
+        """Prompt user for backup location"""
+        choice = messagebox.askyesno(
+            self.get_translation("backup_prompt"),
+            self.get_translation("backup_prompt"),
+            detail=self.get_translation("backup_detail")
+        )
+        
+        if choice:
+            folder = filedialog.askdirectory(title=self.get_translation("backup_location_label"))
+            if folder:
+                self.settings.backup_location = folder
+                self.save_settings()
+    
+    def show_api_dialog(self):
+        """Show API key configuration"""
+        api_window = tk.Toplevel(self.root)
+        api_window.title(self.get_translation("api_config_title"))
+        api_window.geometry("400x300")
+        
+        ttk.Label(api_window, 
+                 text=self.get_translation("api_key_label")).pack(pady=(10, 0))
+        
+        self.api_var = tk.StringVar(value=self.settings.openai_key)
+        api_entry = ttk.Entry(api_window, textvariable=self.api_var)
+        api_entry.pack(fill=tk.X, padx=20)
+        
+        ttk.Label(api_window, 
+                 text=self.get_translation("api_key_hint"),
+                 font=("Arial", 9)).pack()
+        
+        ttk.Button(api_window, 
+                  text=self.get_translation("save_button"), 
+                  command=lambda: self.save_api(api_window)).pack(pady=20)
+    
+    def show_about(self):
+        """Show about dialog"""
+        about_window = tk.Toplevel(self.root)
+        about_window.title(self.get_translation("about_title"))
+        about_window.geometry("300x200")
+        
+        ttk.Label(about_window, 
+                 text="STALKER Scripts Fixer - Bravo",
+                 font=("Arial", 14, "bold")).pack(pady=10)
+        
+        ttk.Label(about_window, 
+                 text=self.get_translation("version_label")).pack()
+        
+        ttk.Label(about_window, 
+                 text="Author: PhantomBeardPH").pack(pady=5)
+        
+        ttk.Label(about_window, 
+                 text="mangganern2023@gmail.com").pack()
+        
+        ttk.Button(about_window, 
+                  text=self.get_translation("close_button"), 
+                  command=about_window.destroy).pack(pady=10)
+    
+    # ======================
+    # UTILITY METHODS
+    # ======================
+    def log_message(self, message):
+        """Add message to process window"""
+        self.process_text.config(state=tk.NORMAL)
+        self.process_text.insert(tk.END, message + "\n")
+        self.process_text.see(tk.END)
+        self.process_text.config(state=tk.DISABLED)
+        self.root.update()
+    
+    def load_settings(self):
+        """Load settings from file"""
+        settings_file = Path("settings.json")
+        if settings_file.exists():
+            try:
+                with open(settings_file, 'r') as f:
+                    return AppSettings(**json.load(f))
+            except:
+                return AppSettings()
+        return AppSettings()
+    
+    def save_settings(self, window=None):
+        """Save current settings"""
+        self.settings.bg_color = self.color_var.get()
+        self.settings.game_version = self.game_var.get()
+        self.settings.backup_location = self.backup_var.get()
+        self.settings.language = self.lang_var.get()
+        
+        with open("settings.json", 'w') as f:
+            json.dump(asdict(self.settings), f, indent=2)
+        
+        self.apply_settings()
+        self.update_ui_language()
+        if window:
+            window.destroy()
+        
+        messagebox.showinfo(self.get_translation("settings_title"), 
+                          self.get_translation("settings_saved_message"))
+    
+    def save_api(self, window):
+        """Save API key"""
+        self.settings.openai_key = self.api_var.get()
+        self.save_settings()
+        window.destroy()
+        messagebox.showinfo(self.get_translation("api_config_title"), 
+                          self.get_translation("api_saved_message"))
+
+# ======================
+# RUN APPLICATION
+# ======================
+if __name__ == "__main__":
+    app = STALKERFixerApp()
+    app.root.mainloop()
